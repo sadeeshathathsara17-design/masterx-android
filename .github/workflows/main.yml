@@ -1,0 +1,61 @@
+
+name: Build MasterX Study APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Apply MasterX Study logo
+        run: |
+          mkdir -p android/app/src/main/res/drawable-nodpi
+          cp assets/masterx-study-icon.png android/app/src/main/res/drawable-nodpi/masterx_study_icon.png
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          p = "android/app/src/main/AndroidManifest.xml"
+          t = ET.parse(p)
+          a = t.getroot().find("application")
+          ns = "{http://schemas.android.com/apk/res/android}"
+          a.set(ns + "icon", "@drawable/masterx_study_icon")
+          a.set(ns + "roundIcon", "@drawable/masterx_study_icon")
+          t.write(p, encoding="utf-8", xml_declaration=True)
+          PY
+
+      - name: Sync app
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MasterX-Study-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
