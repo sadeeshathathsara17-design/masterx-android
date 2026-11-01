@@ -1,0 +1,9 @@
+{
+  "appId": "com.masterx.study",
+  "appName": "MasterX Study",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}
